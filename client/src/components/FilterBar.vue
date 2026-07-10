@@ -104,9 +104,10 @@ export default {
 .filters-bar {
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   padding: 0.75rem 0;
   position: sticky;
-  top: 70px;
+  top: 0;
   z-index: 90;
 }
 
