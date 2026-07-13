@@ -2,25 +2,22 @@
   "mcpServers": {
     "playwright": {
       "type": "stdio",
-      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "command": "npx",
       "args": [
         "-y",
         "@playwright/mcp@0.0.37"
       ],
-      "env": {
-        "PATH": "C:\\Program Files\\nodejs;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0"
-      }
+      "env": {}
     },
     "github": {
       "type": "stdio",
-      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-github"
       ],
       "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}",
-        "PATH": "C:\\Program Files\\nodejs;C:\\Windows\\system32;C:\\Windows;C:\\Windows\\System32\\Wbem;C:\\Windows\\System32\\WindowsPowerShell\\v1.0"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
     }
   }
