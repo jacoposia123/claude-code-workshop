@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from pydantic import BaseModel
+from datetime import datetime
 from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions, purchase_orders
 
 app = FastAPI(title="Factory Inventory Management System")
@@ -128,9 +129,18 @@ def root():
 @app.get("/api/inventory", response_model=List[InventoryItem])
 def get_inventory(
     warehouse: Optional[str] = None,
-    category: Optional[str] = None
+    category: Optional[str] = None,
+    month: Optional[str] = None
 ):
     """Get all inventory items with optional filtering"""
+    # Inventory has no time dimension, so reject `month` explicitly rather
+    # than silently ignoring it (it would otherwise be dropped by FastAPI
+    # before reaching apply_filters, returning an unfiltered 200).
+    if month:
+        raise HTTPException(
+            status_code=400,
+            detail="The 'month' filter is not supported for /api/inventory (inventory has no time dimension)."
+        )
     return apply_filters(inventory_items, warehouse, category)
 
 @app.get("/api/inventory/{item_id}", response_model=InventoryItem)
@@ -178,6 +188,41 @@ def get_backlog():
         item_dict["has_purchase_order"] = has_po
         result.append(item_dict)
     return result
+
+@app.post("/api/purchase-orders", response_model=PurchaseOrder, status_code=201)
+def create_purchase_order(po_request: CreatePurchaseOrderRequest):
+    """Create a purchase order for a backlog item"""
+    backlog_item = next((item for item in backlog_items if item["id"] == po_request.backlog_item_id), None)
+    if not backlog_item:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Backlog item {po_request.backlog_item_id} not found"
+        )
+
+    new_po = {
+        "id": f"PO-{len(purchase_orders) + 1:04d}",
+        "backlog_item_id": po_request.backlog_item_id,
+        "supplier_name": po_request.supplier_name,
+        "quantity": po_request.quantity,
+        "unit_cost": po_request.unit_cost,
+        "expected_delivery_date": po_request.expected_delivery_date,
+        "status": "Processing",
+        "created_date": datetime.now().strftime("%Y-%m-%d"),
+        "notes": po_request.notes
+    }
+    purchase_orders.append(new_po)
+    return new_po
+
+@app.get("/api/purchase-orders/{backlog_item_id}", response_model=PurchaseOrder)
+def get_purchase_order_by_backlog_item(backlog_item_id: str):
+    """Get the purchase order associated with a backlog item"""
+    po = next((po for po in purchase_orders if po["backlog_item_id"] == backlog_item_id), None)
+    if not po:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No purchase order found for backlog item {backlog_item_id}"
+        )
+    return po
 
 @app.get("/api/dashboard/summary")
 def get_dashboard_summary(
