@@ -128,6 +128,15 @@ class TestInventoryEndpoints:
             assert item["reorder_point"] >= 0
             assert item["unit_cost"] >= 0
 
+    def test_get_inventory_with_month_filter_rejected(self, client):
+        """Test that the unsupported 'month' filter returns 400, not a silent no-op."""
+        response = client.get("/api/inventory?month=2025-01")
+        assert response.status_code == 400
+
+        data = response.json()
+        assert "detail" in data
+        assert "month" in data["detail"].lower()
+
     def test_get_inventory_power_supplies_category(self, client):
         """Test filtering by Power Supplies category (newly added)."""
         response = client.get("/api/inventory?category=Power Supplies")
